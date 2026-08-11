@@ -57,38 +57,43 @@ Percentage of telecast watched: total watch time per program
 
 -- METRIC ANALYSIS
 -- average amount of minutes each user watched each program
-WITH base_cte AS (
--- calculate minutes from start and end times
-SELECT
-sd.user_id
-,p.program_name
-,p.program_duration_minutes
-,TIMESTAMPDIFF(MINUTE, sd.started_at, sd.ended_at) AS user_watch_time
-FROM session_data sd 
-INNER JOIN program p ON sd.program_id = p.program_id
+WITH base_cte AS 
+(
+    -- calculate minutes from start and end times
+    SELECT
+    sd.user_id
+    ,p.program_name
+    ,p.program_duration_minutes
+    ,TIMESTAMPDIFF(MINUTE, sd.started_at, sd.ended_at) AS user_watch_time
+    FROM session_data sd 
+    INNER JOIN program p ON sd.program_id = p.program_id
 ), 
-user_level_rollup AS(
--- rolling up from session level to user and program level data to get aggregates calculation
--- aggregate data of total watch time of all users
-SELECT
-user_id
-,program_name
-,MAX(program_duration_minutes) AS program_length
-,SUM(user_watch_time) AS total_watch_time_per_program_per_user
-FROM base_cte
-GROUP BY 1,2 
-ORDER BY 2 
+user_level_rollup AS 
+(
+    -- rolling up from session level to user and program level data to get aggregates calculation
+    -- aggregate data of total watch time of all users
+    SELECT
+    user_id
+    ,program_name
+    ,MAX(program_duration_minutes) AS program_length
+    ,SUM(user_watch_time) AS total_watch_time_per_program_per_user
+    FROM 
+        base_cte
+    GROUP BY 1,2 
+    ORDER BY 2 
 
 )
 -- just for average calculation
 SELECT 
-program_name
-, COUNT(DISTINCT user_id) AS unique_users
-, MAX(program_length) as Program_length
-, SUM(total_watch_time_per_program_per_user) AS total_minutes_viewed
-, SUM(total_watch_time_per_program_per_user) / MAX(program_length) AS average_minute_audience
-, SUM(total_watch_time_per_program_per_user) / (MAX(program_length) * COUNT(DISTINCT user_id)) * 100 AS percentage_of_telecast_watched
--- total length of program in minutes
-FROM user_level_rollup
-GROUP BY program_name ;
+      program_name
+    , COUNT(DISTINCT user_id) AS unique_users
+    , MAX(program_length) as Program_length
+    , SUM(total_watch_time_per_program_per_user) AS total_minutes_viewed
+    , SUM(total_watch_time_per_program_per_user) / MAX(program_length) AS average_minute_audience
+    , SUM(total_watch_time_per_program_per_user) / (MAX(program_length) * COUNT(DISTINCT user_id)) * 100 AS percentage_of_telecast_watched
+    -- total length of program in minutes
+FROM 
+    user_level_rollup
+GROUP BY 
+    program_name ;
 
