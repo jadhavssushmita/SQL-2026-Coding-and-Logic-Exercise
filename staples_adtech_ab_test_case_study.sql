@@ -69,3 +69,6 @@ SELECT
     ((ad_units_sold * (unit_price - unit_cogs)) - ad_spend) AS net_margin_dollars,
     ROUND((ad_units_sold * unit_price) / NULLIF(ad_spend, 0), 2) AS ad_roas
 FROM sku_bid_performance;
+
+
+
